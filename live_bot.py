@@ -1,5 +1,15 @@
+import os
+import threading
 import time
 from datetime import datetime
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+import numpy as np
+import pandas as pd
+import pandas_ta as ta  # Required for live_df.ta indicators
+import ccxt
+import tensorflow as tf
+import xgboost as xgb
 from supabase import create_client
 
 # 1. Create a dummy handler to respond to Render's health checks
@@ -21,24 +31,54 @@ def run_health_check_server():
     print(f"📡 Dummy health check server listening on port {port}...")
     server.serve_forever()
 
-# 3. Start the server in a daemon thread so it doesn't block your main bot loop
+# Start the health check server in a daemon thread
 threading.Thread(target=run_health_check_server, daemon=True).start()
 
-# Initialize Supabase
+# 3. Initialize Exchange API (CCXT)
+# Using public data tracking for BTC/USDT (or BTC/USD depending on exchange pairs)
+exchange = ccxt.binance({
+    'enableRateLimit': True,
+    'options': {
+        'defaultType': 'spot'
+    }
+})
 
-# Initialize Supabase
-supabase = create_client('https://bpizkikscieyhzajrrrg.supabase.co', 'sb_publishable_UwkvMmq91Y5jS1PEJ9IE_w_vN5-JWUP')
+# 4. Load Pre-trained Models
+print("💾 Loading machine learning models...")
+try:
+    # Load LSTM Keras model
+    lstm_model = tf.keras.models.load_model('lstm_feature_extractor.keras')
+    
+    # Load XGBoost model
+    xgb_model = xgb.XGBClassifier()
+    xgb_model.load_model('xgb_model.json')
+    print("✅ Models loaded successfully!")
+except Exception as e:
+    print(f"❌ Error loading models: {e}")
+    exit(1)
+
+# 5. Define Tabular Columns matching your training dataset features
+tabular_columns = [
+    'atr', 'atr_pct', 'dist_vwap', 'chop', 'bb_width', 'is_squeeze',
+    'rsi', 'rsi_slope', 'macd_hist', 'macd_hist_slope', 'ema_9', 'ema_21',
+    'ema_50', 'trend_bull', 'trend_bear', 'body_size', 'upper_wick',
+    'lower_wick', 'wick_ratio', 'rvol'
+]
+
+# 6. Initialize Supabase
+supabase_url = 'https://bpizkikscieyhzajrrrg.supabase.co'
+supabase_key = 'sb_publishable_UwkvMmq91Y5jS1PEJ9IE_w_vN5-JWUP'
+supabase = create_client(supabase_url, supabase_key)
 
 print("🟢 Starting Live 15m Inference Loop...")
 
-# We only need the last 30 candles to calculate features like SMA 50, BBands, etc.
-# (Adjust this if your indicators require a longer lookback)
 lookback_limit = 100 
 
 while True:
     try:
         # 1. Fetch the latest live data
-        ohlcv = exchange.fetch_ohlcv('BTC/USD', '15m', limit=lookback_limit)
+        # Fetching BTC/USDT as a standard proxy for BTC/USD data on Binance
+        ohlcv = exchange.fetch_ohlcv('BTC/USDT', '15m', limit=lookback_limit)
         live_df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
         
         # Get the timestamp of the recently closed candle
