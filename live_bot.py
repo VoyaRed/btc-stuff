@@ -35,12 +35,11 @@ def run_health_check_server():
 threading.Thread(target=run_health_check_server, daemon=True).start()
 
 # 3. Initialize Exchange API (CCXT)
-# Fetching BTC/USDT spot data from Binance to feed indicators
-exchange = ccxt.binance({
+# Fetching BTC/USD spot data from Coinbase to feed indicators
+exchange = ccxt.coinbase({
     'enableRateLimit': True,
-    'options': {
-        'defaultType': 'spot'
-    }
+    # 'apiKey': 'YOUR_API_KEY',       # Only needed if you add live trading execution later
+    # 'secret': 'YOUR_API_SECRET',    
 })
 
 # 4. Load Pre-trained Models
@@ -77,7 +76,7 @@ lookback_limit = 100
 while True:
     try:
         # 1. Fetch the latest live data
-        ohlcv = exchange.fetch_ohlcv('BTC/USDT', '15m', limit=lookback_limit)
+        ohlcv = exchange.fetch_ohlcv('BTC/USD', '15m', limit=lookback_limit)
         live_df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
         
         # Get the timestamp of the recently closed candle
