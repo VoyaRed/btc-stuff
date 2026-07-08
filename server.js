@@ -6,8 +6,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Initialize Supabase Client
-const supabaseUrl = process.env.SUPABASE_URL || 'YOUR_SUPABASE_URL';
-const supabaseKey = process.env.SUPABASE_KEY || 'YOUR_ANON_KEY';
+const supabaseUrl = process.env.SUPABASE_URL || 'https://bpizkikscieyhzajrrrg.supabase.co';
+const supabaseKey = process.env.SUPABASE_KEY || 'sb_publishable_UwkvMmq91Y5jS1PEJ9IE_w_vN5-JWUP';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Serve the static HTML dashboard
