@@ -5,3 +5,7 @@ ccxt
 tensorflow-cpu
 xgboost
 supabase
+fastapi
+uvicorn
+pydantic
+scikit-learn
