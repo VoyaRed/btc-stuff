@@ -6,11 +6,12 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import numpy as np
 import pandas as pd
-import pandas_ta as ta  # Required for live_df.ta indicators
+import pandas_ta as ta
 import ccxt
 import tensorflow as tf
 import xgboost as xgb
 from supabase import create_client
+
 
 # 1. Create a dummy handler to respond to Render's health checks
 class HealthCheckHandler(BaseHTTPRequestHandler):
