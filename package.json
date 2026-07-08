@@ -1,2 +1,13 @@
-npm init -y
-npm install express @supabase/supabase-js
+{
+  "name": "upsidedowncake-bot-ui",
+  "version": "1.0.0",
+  "description": "Live BTC predictions dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "@supabase/supabase-js": "^2.38.0"
+  }
+}
