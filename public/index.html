@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Predictions | upsidedowncake-bot</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --long-color: #22c55e;
+            --short-color: #ef4444;
+            --skip-color: #64748b;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .dashboard {
+            width: 100%;
+            max-width: 800px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--panel-bg);
+        }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: var(--long-color);
+        }
+        .pulse {
+            width: 10px;
+            height: 10px;
+            background-color: var(--long-color);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--long-color);
+            animation: blink 1.5s infinite alternate;
+        }
+        @keyframes blink { 100% { opacity: 0.5; } }
+        .hero-card {
+            background-color: var(--panel-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .current-pred { font-size: 3rem; font-weight: bold; margin: 1rem 0; }
+        .LONG { color: var(--long-color); }
+        .SHORT { color: var(--short-color); }
+        .SKIP { color: var(--skip-color); }
+        
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--panel-bg);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .history-table th, .history-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+        }
+        .history-table th { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
+        .history-table tr:last-child td { border-bottom: none; }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .bg-LONG { background-color: rgba(34, 197, 94, 0.2); color: var(--long-color); }
+        .bg-SHORT { background-color: rgba(239, 68, 68, 0.2); color: var(--short-color); }
+        .bg-SKIP { background-color: rgba(100, 116, 139, 0.2); color: var(--text-main); }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <div class="header">
+        <h2>BTC/USD 15m Intelligence</h2>
+        <div class="status-indicator">
+            <div class="pulse"></div>
+            Polling Live Models
+        </div>
+    </div>
+
+    <div class="hero-card" id="active-card">
+        <div style="color: var(--text-muted)">Current 15m Signal</div>
+        <div class="current-pred" id="current-signal">--</div>
+        <div id="current-price" style="font-size: 1.2rem; margin-top: 10px;">Price: $--</div>
+        <div id="current-conf" style="font-size: 0.9rem; color: var(--text-muted); margin-top: 5px;">Confidence: --%</div>
+    </div>
+
+    <h3>Last 24 Hours</h3>
+    <table class="history-table">
+        <thead>
+            <tr>
+                <th>Time (Close)</th>
+                <th>Price</th>
+                <th>Prediction</th>
+                <th>Confidence</th>
+            </tr>
+        </thead>
+        <tbody id="history-body">
+            <tr><td colspan="4" style="text-align: center;">Loading data...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    async function fetchLivePredictions() {
+        try {
+            const response = await fetch('/api/predictions');
+            const data = await response.json();
+            
+            if (data && data.length > 0) {
+                const latest = data[0];
+                
+                // Update Hero Card
+                const signalEl = document.getElementById('current-signal');
+                signalEl.textContent = latest.prediction;
+                signalEl.className = `current-pred ${latest.prediction}`;
+                
+                document.getElementById('current-price').textContent = `Lock Price: $${latest.price.toLocaleString()}`;
+                document.getElementById('current-conf').textContent = `Model Confidence: ${(latest.probability * 100).toFixed(1)}%`;
+
+                // Update Table
+                const tbody = document.getElementById('history-body');
+                tbody.innerHTML = '';
+                
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    const date = new Date(row.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    
+                    tr.innerHTML = `
+                        <td>${date}</td>
+                        <td>$${row.price.toLocaleString()}</td>
+                        <td><span class="badge bg-${row.prediction}">${row.prediction}</span></td>
+                        <td>${(row.probability * 100).toFixed(1)}%</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        } catch (error) {
+            console.error('Failed to update UI:', error);
+        }
+    }
+
+    // Fetch immediately, then poll every 60 seconds
+    fetchLivePredictions();
+    setInterval(fetchLivePredictions, 60000);
+</script>
+
+</body>
+</html>
