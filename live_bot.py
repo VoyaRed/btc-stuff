@@ -2,6 +2,28 @@ import time
 from datetime import datetime
 from supabase import create_client
 
+# 1. Create a dummy handler to respond to Render's health checks
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"Bot is alive and kicking!")
+    
+    def log_message(self, format, *args):
+        # Suppress spammy log messages from Render's health checks
+        return
+
+# 2. Function to spin up the server on the port Render assigns
+def run_health_check_server():
+    port = int(os.environ.get("PORT", 10000)) # Render automatically provides this env variable
+    server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
+    print(f"📡 Dummy health check server listening on port {port}...")
+    server.serve_forever()
+
+# 3. Start the server in a daemon thread so it doesn't block your main bot loop
+threading.Thread(target=run_health_check_server, daemon=True).start()
+
 # Initialize Supabase
 
 # Initialize Supabase
