@@ -1,8 +1,7 @@
-fastapi
-uvicorn
-pydantic
 numpy
-tensorflow-cpu==2.21.0
+pandas
+pandas-ta
+ccxt
+tensorflow-cpu
 xgboost
-scikit-learn
 supabase
