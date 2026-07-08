@@ -4,7 +4,8 @@ from supabase import create_client
 
 # Initialize Supabase
 
-supabase = create_client('https://tggqamigkruvhoqkyxrq.supabase.co', 'sb_publishable_HVa5hO_AyTxmsI_iIgrDBA_jSenZuSD')
+# Initialize Supabase
+supabase = create_client('YOUR_SUPABASE_URL', 'YOUR_SUPABASE_ANON_KEY')
 
 print("🟢 Starting Live 15m Inference Loop...")
 
