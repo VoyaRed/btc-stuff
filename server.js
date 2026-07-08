@@ -10,9 +10,6 @@ const supabaseUrl = process.env.SUPABASE_URL || 'https://bpizkikscieyhzajrrrg.su
 const supabaseKey = process.env.SUPABASE_KEY || 'sb_publishable_UwkvMmq91Y5jS1PEJ9IE_w_vN5-JWUP';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// 1. Serve static files (HTML, CSS, JS) from the 'public' folder
-app.use(express.static(path.join(__dirname, 'public')));
-
 // 2. ADD THIS: Ensure requests to the root URL serve index.html
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
