@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pydantic
+numpy
+tensorflow-cpu==2.21.0
+xgboost
+scikit-learn
