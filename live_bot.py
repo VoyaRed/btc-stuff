@@ -6,12 +6,11 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import numpy as np
 import pandas as pd
-import pandas_ta as ta
+import pandas_ta as ta  # Required for live_df.ta indicators
 import ccxt
 import tensorflow as tf
 import xgboost as xgb
 from supabase import create_client
-
 
 # 1. Create a dummy handler to respond to Render's health checks
 class HealthCheckHandler(BaseHTTPRequestHandler):
@@ -32,11 +31,11 @@ def run_health_check_server():
     print(f"📡 Dummy health check server listening on port {port}...")
     server.serve_forever()
 
-# Start the health check server in a daemon thread
+# Start the health check server in a daemon thread so it doesn't block the loop
 threading.Thread(target=run_health_check_server, daemon=True).start()
 
 # 3. Initialize Exchange API (CCXT)
-# Using public data tracking for BTC/USDT (or BTC/USD depending on exchange pairs)
+# Fetching BTC/USDT spot data from Binance to feed indicators
 exchange = ccxt.binance({
     'enableRateLimit': True,
     'options': {
@@ -78,12 +77,11 @@ lookback_limit = 100
 while True:
     try:
         # 1. Fetch the latest live data
-        # Fetching BTC/USDT as a standard proxy for BTC/USD data on Binance
         ohlcv = exchange.fetch_ohlcv('BTC/USDT', '15m', limit=lookback_limit)
         live_df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
         
         # Get the timestamp of the recently closed candle
-        latest_timestamp = live_df['timestamp'].iloc[-2] # -1 is the currently forming candle, -2 is closed
+        latest_timestamp = live_df['timestamp'].iloc[-2] # -1 is forming candle, -2 is officially closed
         current_price = live_df['close'].iloc[-2]
         
         # 2. Calculate Features exactly as you did in training
@@ -159,9 +157,10 @@ while True:
             "probability": float(conf)
         }).execute()
         
-        # Sleep until the next 15-minute mark (plus a small buffer to ensure candle is closed)
+        # Sleep until the next 15-minute mark
         time.sleep(60 * 15)
         
     except Exception as e:
         print(f"❌ Live Loop Error: {e}")
         time.sleep(60) # Retry in a minute if API fails
+    
